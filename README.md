@@ -1,22 +1,138 @@
-﻿# ProofLayer
+# ProofLayer
 
-ProofLayer verifies image and text authenticity risk using ML scoring + SHA-256 content fingerprints.
-Each scan generates a certificate-style report with a public verification link.
+### Image & Text Authenticity Risk Analysis
 
-## Tech Stack
+ProofLayer is a web-based application that analyzes images and text for potential AI-generated content using machine-learning inference. It generates risk scores, calculates SHA-256 content fingerprints, and produces certificate-style reports with public verification links.
 
-- Backend: FastAPI, SQLite, Pillow, Requests
-- Frontend: HTML + Tailwind CDN + Chart.js
-- AI Inference: Hugging Face Inference API
-- Deploy: Render (API) + Vercel (frontend)
+> **Note:** Risk scores are model predictions, not definitive proof of whether content is AI-generated or human-created.
+
+---
+
+## Project Links
+
+* **GitHub Repository:** https://github.com/Aarik03/ProofLayer---Website-
+* **Live Website:** `ADD_VERIFIED_VERCEL_URL`
+* **Backend API:** `ADD_VERIFIED_RENDER_API_URL`
+* **API Documentation:** `ADD_BACKEND_URL/docs`
+
+---
+
+## Overview
+
+The growing availability of AI-generated images and text makes content authenticity increasingly difficult to assess. ProofLayer provides a single interface for submitting content, evaluating model-generated risk scores, and reviewing verification reports.
+
+The application combines machine-learning inference, content fingerprinting, report storage, and a dashboard to present the results in an accessible format.
+
+### Key Objectives
+
+* Analyze images and text using configurable inference endpoints.
+* Generate risk scores and corresponding risk categories.
+* Create SHA-256 fingerprints for submitted content.
+* Store verification results and generate report links.
+* Present scan statistics through a dashboard.
+* Demonstrate backend API development, deployment, and CI automation.
+
+## Website Preview
+
+![ProofLayer homepage](screenshots/01-homepage.png)
+
+---
 
 ## Features
 
-- `POST /verify-image` (upload image, score, hash, save report)
-- `POST /verify-text` (paste text, score, hash, save report)
-- `GET /report/{verification_id}` (public report)
-- `GET /dashboard-stats` (total, risk distribution, last 5 scans)
-- Premium black glass UI with loading/error states
+### 1. Image Verification
+
+Users upload an image for model-based analysis. The application returns a risk score, calculates a content fingerprint, and stores the verification result.
+
+### 2. Text Verification
+
+Users submit text for analysis through the configured inference service. The result includes a risk score and a SHA-256 fingerprint of the submitted content.
+
+### 3. Public Verification Reports
+
+Each completed scan receives a verification identifier. The associated report can be opened through its public link.
+
+### 4. Dashboard
+
+The dashboard presents total scans, risk distribution, and recent verification activity.
+
+### 5. Responsive User Interface
+
+The interface uses a dark glass-inspired visual design, with loading and error states intended to make the verification workflow easier to understand.
+
+### 6. Input Validation
+
+The application is designed to handle invalid image uploads, empty text submissions, oversized inputs, and missing report identifiers.
+
+---
+
+## Screenshots
+
+<img width="1301" height="682" alt="website5" src="https://github.com/user-attachments/assets/f71bc779-e298-4838-9ad9-371d858e3cdd" />
+
+
+---
+
+## System Architecture
+
+The application consists of a web frontend, a FastAPI backend, a SQLite database, and an external machine-learning inference service.
+
+```text
+                 User
+                   |
+                   v
+          Web Frontend
+       HTML + Tailwind + JS
+                   |
+                   v
+             FastAPI API
+          /       |       \
+         v        v        v
+   ML Inference  SQLite  SHA-256
+      Service    Storage Fingerprint
+          \       |       /
+                   v
+          Verification Report
+                   |
+                   v
+          Public Report Link
+```
+
+The frontend communicates with the backend API. The backend processes submissions, requests model inference, calculates content fingerprints, and stores verification results for report retrieval and dashboard statistics.
+
+---
+
+## API Endpoints
+
+| Method | Endpoint                    | Description                      |
+| ------ | --------------------------- | -------------------------------- |
+| `POST` | `/verify-image`             | Submit an image for verification |
+| `POST` | `/verify-text`              | Submit text for verification     |
+| `GET`  | `/report/{verification_id}` | Retrieve a verification report   |
+| `GET`  | `/dashboard-stats`          | Retrieve dashboard statistics    |
+
+Interactive API documentation is available at `/docs` when the FastAPI backend is running.
+
+---
+
+## Technology Stack
+
+| Component                  | Technology                     |
+| -------------------------- | ------------------------------ |
+| Backend                    | FastAPI, Python                |
+| Database                   | SQLite                         |
+| Image Processing           | Pillow                         |
+| HTTP Requests              | Requests                       |
+| Frontend                   | HTML, Tailwind CSS, JavaScript |
+| Charts                     | Chart.js                       |
+| Machine-Learning Inference | Hugging Face Inference API     |
+| Content Fingerprinting     | SHA-256                        |
+| Backend Deployment         | Render                         |
+| Frontend Deployment        | Vercel                         |
+| Version Control            | Git and GitHub                 |
+| Continuous Integration     | Jenkins                        |
+
+---
 
 ## Project Structure
 
@@ -36,230 +152,211 @@ ProofLayer/
 │   ├── verify-text.html
 │   ├── dashboard.html
 │   └── report.html
+├── screenshots/
 └── uploads/
 ```
 
-## 1. Local Setup
+---
+
+## Local Setup
 
 ### Prerequisites
 
-- Python 3.10+
-- Hugging Face account + token
+* Python 3.10 or later
+* Git
+* A Hugging Face account and access token for the configured inference service
 
-### Install
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Aarik03/ProofLayer---Website-.git
+cd ProofLayer---Website-
+```
+
+### 2. Create a Virtual Environment
+
+**Windows:**
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+**Linux/macOS:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Configure env
+### 4. Configure Environment Variables
 
-Create `.env` in project root:
+Create a `.env` file in the project root using `.env.example` as a reference.
 
 ```env
-HF_TOKEN=hf_xxxxxxxxxxxxxxxxx
-HF_IMAGE_MODEL_ENDPOINT=https://api-inference.huggingface.co/models/umm-maybe/AI-image-detector
-HF_TEXT_MODEL_ENDPOINT=https://api-inference.huggingface.co/models/roberta-base-openai-detector
+HF_TOKEN=your_hugging_face_token
+HF_IMAGE_MODEL_ENDPOINT=your_image_model_endpoint
+HF_TEXT_MODEL_ENDPOINT=your_text_model_endpoint
 ```
 
-### Run API
+Use the actual supported inference endpoint URLs from your project configuration. Keep credentials private and never commit `.env` to GitHub.
+
+### 5. Start the Backend
 
 ```bash
 uvicorn main:app --reload
 ```
 
-Open docs:
+Open the interactive API documentation:
 
-- `http://127.0.0.1:8000/docs`
+`http://127.0.0.1:8000/docs`
 
-### Open frontend
+### 6. Open the Frontend
 
-Open files from `static/` in browser (or via Live Server).
-Default API base is `http://127.0.0.1:8000`.
+Open the relevant HTML files from the `static/` directory using a local web server, such as VS Code Live Server.
 
-If needed, set API base in browser console:
+Configure the frontend's API base URL to point to the running backend if necessary.
 
-```js
-localStorage.setItem("prooflayer_api_base", "http://127.0.0.1:8000");
+```javascript
+localStorage.setItem(
+  "prooflayer_api_base",
+  "http://127.0.0.1:8000"
+);
 ```
 
-## 2. Deploy Backend on Render
+The frontend must be able to reach the backend, and browser requests must satisfy the backend's CORS configuration.
 
-### Option A: Blueprint (recommended)
+---
 
-1. Push repo to GitHub
-2. In Render: `New` -> `Blueprint`
-3. Select this repo (uses `render.yaml`)
-4. Set `HF_TOKEN` in Render env vars
-5. Deploy
+## Deployment
 
-The API URL will look like:
+### Backend — Render
 
-- `https://prooflayer-api.onrender.com`
+The repository includes a `render.yaml` configuration intended to support deployment through Render.
 
-### Option B: Manual web service
+1. Push the project to GitHub.
+2. Create a new Blueprint in Render and select the repository.
+3. Review the service configuration.
+4. Configure `HF_TOKEN` and other required environment variables.
+5. Deploy the backend.
+6. Verify the API health and documentation endpoints.
 
-- Build command: `pip install -r requirements.txt`
-- Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- Add persistent disk mount to project path for SQLite durability
+**Deployed backend:** `ADD_VERIFIED_RENDER_API_URL`
 
-## 3. Deploy Frontend on Vercel
+If the application relies on SQLite or uploaded files, configure persistent storage where required. Confirm that the deployed service can retain data across restarts.
 
-1. Import same repo into Vercel
-2. Framework preset: `Other`
-3. Deploy (uses `vercel.json`)
-4. Open site and set API base once in browser console:
+### Frontend — Vercel
 
-```js
-localStorage.setItem("prooflayer_api_base", "https://YOUR-RENDER-API-URL");
-```
+1. Import the GitHub repository into Vercel.
+2. Review the project settings and deployment configuration.
+3. Configure the frontend API base URL to use the deployed backend.
+4. Deploy the frontend.
+5. Test image verification, text verification, dashboard access, and report retrieval.
 
-Now routes work:
+**Deployed frontend:** `ADD_VERIFIED_VERCEL_URL`
 
-- `/`
-- `/verify-image`
-- `/verify-text`
-- `/dashboard`
-- `/report?id=PL-2026-XXXXX`
+Deployment configuration and routing must be tested against the actual `vercel.json` file. Do not assume that all routes work until they have been verified.
 
-## API Response Notes
+---
 
-- `score` is AI-generation probability from 0 to 1
-- `risk_level`: `Low`, `Medium`, `High`
-- `hash`: SHA-256 fingerprint of submitted content
+## Jenkins CI Integration
 
-## QA Checklist (Use Before Demo)
+Jenkins is used to demonstrate a basic Continuous Integration workflow for the ProofLayer repository.
 
-1. Upload valid image
-2. Upload non-image file (should return clean error)
-3. Upload very large image >10MB (should block)
-4. Submit empty text (should block)
-5. Submit long text >20,000 chars (should block)
-6. Open dashboard with and without data
-7. Open report with fake ID (should show error)
-8. Click verify rapidly (button should disable while loading)
+### Pipeline Workflow
 
-## Website Changes and Git Commit History
+1. Configure a Jenkins Pipeline job.
+2. Connect the job to the GitHub repository.
+3. Configure the `main` branch as the source branch.
+4. Check out the repository.
+5. Run the configured website-file validation steps.
+6. Review the build status and Console Output.
 
-The following changes were made to the ProofLayer website and recorded in Git:
+### Integration Evidence
 
-| No. | Commit Message                       | Description                                                                         |
-| --- | ------------------------------------ | ----------------------------------------------------------------------------------- |
-| 1   | Add ProofLayer website project       | Added the initial website source code to the GitHub repository.                     |
-| 2   | Add How ProofLayer Works section     | Added a section explaining how the website's verification process works.            |
-| 3   | Add verification FAQ section         | Added frequently asked questions to help users understand the website.              |
-| 4   | Add verification limitations notice  | Added information about the limitations of authenticity verification.               |
-| 5   | Add responsive navigation footer     | Improved the website's navigation and footer layout.                                |
-| 6   | Improve responsive navigation layout | Updated navigation styling to wrap items and adjust text sizing on smaller screens. |
+**Pipeline Configuration**
 
-These changes were tracked using Git commits and pushed to the GitHub repository.
+<img width="1920" height="906" alt="jenkins2" src="https://github.com/user-attachments/assets/bf821249-7edc-4135-8bd9-05c5ec7de847" />
+
+
+**Successful Build**
+
+<img width="1896" height="877" alt="jenkins1" src="https://github.com/user-attachments/assets/0f7c386b-8ddb-41ce-b5dd-f306f6d95ad5" />
+
+### Scope of Integration
+
+The configured pipeline demonstrates repository checkout and website-file validation. It does not provide automatic deployment unless a deployment stage has been separately implemented and verified.
+
+---
 
 ## Git and GitHub Workflow
 
-The following Git commands were used to manage and upload the project:
+Git is used to track source-code changes, while GitHub hosts the repository and its development history.
+
+Typical workflow:
 
 ```bash
-git init
+git status
 git add .
-git commit -m "Add ProofLayer website project"
-git remote add origin https://github.com/Aarik03/ProofLayer---Website-.git
-git push -u origin main
+git commit -m "Describe the specific change"
+git push origin main
 ```
 
-Subsequent website changes were saved using `git add`, `git commit`, and `git push`. The GitHub repository maintains the commit history of the project.
+The project history should document meaningful changes rather than placing every modification in a single initial commit.
 
-## Jenkins Integration
+### Repository Evidence
 
-Jenkins was used to demonstrate Continuous Integration (CI) for the ProofLayer website.
+<img width="1888" height="894" alt="repos" src="https://github.com/user-attachments/assets/ef97395b-02e9-4930-918e-a44aeb218bd6" />
 
-1. Opened Jenkins and created a Pipeline project.
-2. Configured the pipeline to check out the `main` branch from GitHub.
-3. Added validation steps to check that the main website files exist.
-4. Ran the pipeline using **Build Now**.
-5. Checked the Console Output to verify the build result.
 
-**Result:** The Jenkins build completed successfully with `Finished: SUCCESS`. The pipeline checked out the repository and validated the specified website files.
+### Commit History
 
-**Scope:** The configured pipeline demonstrates source-code checkout and website-file validation. Automatic deployment is not configured.
+<img width="1787" height="830" alt="commits" src="https://github.com/user-attachments/assets/455bddb7-0c65-4952-a982-50ac9c8cdfbd" />
 
-## Screenshots and Evidence
 
-The screenshots below provide evidence of the website, GitHub repository, commit history, and Jenkins integration.
+---
 
-### 1. Website
+## Testing and Quality Assurance
 
-Shows the ProofLayer website and its updated interface.
+The following checks should be performed before demonstrating the application.
 
-### 2. GitHub Repository
+| Test                         | Expected Behavior                                           |
+| ---------------------------- | ----------------------------------------------------------- |
+| Upload a valid image         | Returns a verification result                               |
+| Upload a non-image file      | Displays a clear validation error                           |
+| Upload an oversized image    | Rejects the request if size validation is configured        |
+| Submit empty text            | Rejects the request if empty-input validation is configured |
+| Submit very long text        | Applies the configured input-size limit                     |
+| Open dashboard without scans | Displays an appropriate empty state                         |
+| Open a nonexistent report    | Displays a clear error or not-found response                |
+| Trigger repeated submissions | Provides appropriate loading and request handling           |
 
-Shows the repository and uploaded project files.
+The expected results must be confirmed against the actual implementation before these checks are marked as passed.
 
-### 3. Git Commit History
+---
 
-Shows the commits documenting the website changes.
+## Known Limitations
 
-### 4. Jenkins Pipeline Result
+* Risk scores are probabilistic model outputs and cannot conclusively establish content authorship.
+* Detection accuracy depends on the selected model, input characteristics, and inference service.
+* External inference services may experience latency, rate limits, or temporary unavailability.
+* Public report links require appropriate consideration of privacy and data exposure.
+* Production deployment requires appropriate configuration for database persistence, uploaded files, API credentials, and error handling.
 
-Shows the successful Jenkins build and its result.
+---
 
-Screenshots and Evidence
+## Future Improvements
 
-The following screenshots document the ProofLayer website, GitHub repository, Git commit history, and Jenkins integration
+Potential improvements include stronger automated testing, structured logging, more robust API validation, improved report privacy controls, and additional CI checks.
 
-## Screenshots and Evidence
-
-### 1. ProofLayer Website Interface
-
-(screenshots/Screenshot%202026-10-25%20233851.png)
-
-### 2. Website - How ProofLayer Works
-
-(screenshots/Screenshot%202026-10-25%20233835.png)
-
-### 3. Website - Verification FAQ
-
-(screenshots/Screenshot%202026-10-25%20233816.png)
-
-### 4. Website - Verification Limitations Notice
-
-(screenshots/Screenshot%202026-10-25%20233802.png)
-
-### 5. Responsive Navigation and Footer
-
-(screenshots/Screenshot%202026-10-25%20233747.png)
-
-### 6. GitHub Repository
-
-(screenshots/Screenshot%202026-10-25%20233735.png)
-
-### 7. Git Commit History
-
-(screenshots/Screenshot%202026-10-25%20233716.png)
-
-### 8. Jenkins Pipeline Configuration
-
-(screenshots/Screenshot%202026-10-25%20233656.png)
-
-### 9. Jenkins Build Result
-
-(screenshots/Screenshot%202026-10-25%20233420.png)
-
-### 10. Jenkins Console Output
-
-(screenshots/Screenshot%202026-10-25%20233407.png)
-
-1. Start from landing page (`Is This Real?`)
-2. Verify one AI-looking image (show High risk)
-3. Open generated public report link
-4. Verify one human-written text (show lower risk)
-5. Open dashboard and explain risk distribution
-
-## Known Limits
-
-- Detector output is probabilistic, not guaranteed truth
-- Hugging Face free inference can be slow/cold-started
-- Some model endpoints may be unavailable; swap via env vars only (no code changes needed)
+---
 
 ## License
 
-Hackathon prototype.
+No license has been specified yet. Add an appropriate license if the project is intended for reuse or distribution.
