@@ -80,7 +80,7 @@ Default API base is `http://127.0.0.1:8000`.
 If needed, set API base in browser console:
 
 ```js
-localStorage.setItem('prooflayer_api_base', 'http://127.0.0.1:8000')
+localStorage.setItem("prooflayer_api_base", "http://127.0.0.1:8000");
 ```
 
 ## 2. Deploy Backend on Render
@@ -111,7 +111,7 @@ The API URL will look like:
 4. Open site and set API base once in browser console:
 
 ```js
-localStorage.setItem('prooflayer_api_base', 'https://YOUR-RENDER-API-URL')
+localStorage.setItem("prooflayer_api_base", "https://YOUR-RENDER-API-URL");
 ```
 
 Now routes work:
@@ -139,7 +139,114 @@ Now routes work:
 7. Open report with fake ID (should show error)
 8. Click verify rapidly (button should disable while loading)
 
-## Demo Script (3 Minutes)
+## Website Changes and Git Commit History
+
+The following changes were made to the ProofLayer website and recorded in Git:
+
+| No. | Commit Message                       | Description                                                                         |
+| --- | ------------------------------------ | ----------------------------------------------------------------------------------- |
+| 1   | Add ProofLayer website project       | Added the initial website source code to the GitHub repository.                     |
+| 2   | Add How ProofLayer Works section     | Added a section explaining how the website's verification process works.            |
+| 3   | Add verification FAQ section         | Added frequently asked questions to help users understand the website.              |
+| 4   | Add verification limitations notice  | Added information about the limitations of authenticity verification.               |
+| 5   | Add responsive navigation footer     | Improved the website's navigation and footer layout.                                |
+| 6   | Improve responsive navigation layout | Updated navigation styling to wrap items and adjust text sizing on smaller screens. |
+
+These changes were tracked using Git commits and pushed to the GitHub repository.
+
+## Git and GitHub Workflow
+
+The following Git commands were used to manage and upload the project:
+
+```bash
+git init
+git add .
+git commit -m "Add ProofLayer website project"
+git remote add origin https://github.com/Aarik03/ProofLayer---Website-.git
+git push -u origin main
+```
+
+Subsequent website changes were saved using `git add`, `git commit`, and `git push`. The GitHub repository maintains the commit history of the project.
+
+## Jenkins Integration
+
+Jenkins was used to demonstrate Continuous Integration (CI) for the ProofLayer website.
+
+1. Opened Jenkins and created a Pipeline project.
+2. Configured the pipeline to check out the `main` branch from GitHub.
+3. Added validation steps to check that the main website files exist.
+4. Ran the pipeline using **Build Now**.
+5. Checked the Console Output to verify the build result.
+
+**Result:** The Jenkins build completed successfully with `Finished: SUCCESS`. The pipeline checked out the repository and validated the specified website files.
+
+**Scope:** The configured pipeline demonstrates source-code checkout and website-file validation. Automatic deployment is not configured.
+
+## Screenshots and Evidence
+
+The screenshots below provide evidence of the website, GitHub repository, commit history, and Jenkins integration.
+
+### 1. Website
+
+Shows the ProofLayer website and its updated interface.
+
+### 2. GitHub Repository
+
+Shows the repository and uploaded project files.
+
+### 3. Git Commit History
+
+Shows the commits documenting the website changes.
+
+### 4. Jenkins Pipeline Result
+
+Shows the successful Jenkins build and its result.
+
+Screenshots and Evidence
+
+The following screenshots document the ProofLayer website, GitHub repository, Git commit history, and Jenkins integration
+
+## Screenshots and Evidence
+
+### 1. ProofLayer Website Interface
+
+(screenshots/Screenshot%202026-10-25%20233851.png)
+
+### 2. Website - How ProofLayer Works
+
+(screenshots/Screenshot%202026-10-25%20233835.png)
+
+### 3. Website - Verification FAQ
+
+(screenshots/Screenshot%202026-10-25%20233816.png)
+
+### 4. Website - Verification Limitations Notice
+
+(screenshots/Screenshot%202026-10-25%20233802.png)
+
+### 5. Responsive Navigation and Footer
+
+(screenshots/Screenshot%202026-10-25%20233747.png)
+
+### 6. GitHub Repository
+
+(screenshots/Screenshot%202026-10-25%20233735.png)
+
+### 7. Git Commit History
+
+(screenshots/Screenshot%202026-10-25%20233716.png)
+
+### 8. Jenkins Pipeline Configuration
+
+(screenshots/Screenshot%202026-10-25%20233656.png)
+
+### 9. Jenkins Build Result
+
+(screenshots/Screenshot%202026-10-25%20233420.png)
+
+### 10. Jenkins Console Output
+
+(screenshots/Screenshot%202026-10-25%20233407.png)
 
 1. Start from landing page (`Is This Real?`)
 2. Verify one AI-looking image (show High risk)
