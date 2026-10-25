@@ -1,0 +1,119 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProofLayer | Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#07090f; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.14); }
+    body { font-family:'Sora',sans-serif; background:radial-gradient(circle at 20% 15%, rgba(118,247,255,.12), transparent 35%), radial-gradient(circle at 80% 85%, rgba(124,255,188,.12), transparent 30%), var(--bg); color:#f5f7ff; min-height:100vh; }
+    .glass { background:var(--card); border:1px solid var(--line); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); box-shadow:0 20px 60px rgba(0,0,0,.45); }
+  </style>
+</head>
+<body>
+  <header class="max-w-6xl mx-auto px-6 py-6">
+    <nav class="glass rounded-2xl px-5 py-4 flex items-center justify-between">
+      <a href="index.html" class="text-xl font-semibold tracking-wide">ProofLayer</a>
+      <div class="flex gap-3 text-sm">
+        <a class="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10" href="verify-image.html">Verify Image</a>
+        <a class="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10" href="verify-text.html">Verify Text</a>
+        <a class="px-4 py-2 rounded-xl border border-white/20 bg-white/10" href="dashboard.html">Dashboard</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 pb-16 space-y-6">
+    <section class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass rounded-2xl p-5"><p class="text-sm text-slate-300">Total Scans</p><p id="totalScans" class="text-3xl font-semibold mt-2">0</p></div>
+      <div class="glass rounded-2xl p-5"><p class="text-sm text-slate-300">High Risk</p><p id="highRisk" class="text-3xl font-semibold mt-2 text-red-300">0</p></div>
+      <div class="glass rounded-2xl p-5"><p class="text-sm text-slate-300">Medium Risk</p><p id="mediumRisk" class="text-3xl font-semibold mt-2 text-amber-300">0</p></div>
+      <div class="glass rounded-2xl p-5"><p class="text-sm text-slate-300">Low Risk</p><p id="lowRisk" class="text-3xl font-semibold mt-2 text-emerald-300">0</p></div>
+    </section>
+
+    <section class="grid lg:grid-cols-5 gap-6">
+      <div class="glass rounded-3xl p-6 lg:col-span-2">
+        <h2 class="text-xl font-semibold">Risk Distribution</h2>
+        <canvas id="riskChart" class="mt-4"></canvas>
+      </div>
+      <div class="glass rounded-3xl p-6 lg:col-span-3 overflow-x-auto">
+        <h2 class="text-xl font-semibold">Last 5 Verifications</h2>
+        <table class="w-full mt-4 text-sm">
+          <thead>
+            <tr class="text-left text-slate-300 border-b border-white/10"><th class="py-2">ID</th><th class="py-2">Type</th><th class="py-2">Score</th><th class="py-2">Risk</th><th class="py-2">Timestamp</th></tr>
+          </thead>
+          <tbody id="recentRows"></tbody>
+        </table>
+      </div>
+    </section>
+    <div class="flex items-center gap-3">
+      <p id="status" class="text-sm text-slate-300"></p>
+      <button id="retryBtn" class="hidden px-3 py-1.5 text-xs rounded-lg border border-white/20 hover:bg-white/10">Retry</button>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = (localStorage.getItem('prooflayer_api_base') || 'http://127.0.0.1:8000').replace(/\/$/, '');
+    let riskChart = null;
+
+    function renderChart(riskCounts) {
+      const ctx = document.getElementById('riskChart').getContext('2d');
+      if (riskChart) riskChart.destroy();
+      riskChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: ['High','Medium','Low'], datasets: [{ data: [riskCounts.High || 0, riskCounts.Medium || 0, riskCounts.Low || 0], backgroundColor: ['#fca5a5','#fde68a','#86efac'], borderWidth: 0 }] },
+        options: { plugins: { legend: { labels: { color: '#d1d5db' } } } },
+      });
+    }
+
+    function renderTable(items) {
+      const tbody = document.getElementById('recentRows');
+      tbody.innerHTML = '';
+      if (!items.length) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td class="py-3 text-slate-300" colspan="5">No scans yet. Run your first verification.</td>';
+        tbody.appendChild(row);
+        return;
+      }
+      items.forEach((item) => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-white/10';
+        row.innerHTML = `<td class="py-3"><a class="text-cyan-200 hover:underline" href="report.html?id=${encodeURIComponent(item.verification_id)}">${item.verification_id}</a></td><td class="py-3 uppercase">${item.type}</td><td class="py-3">${(Number(item.score) * 100).toFixed(1)}%</td><td class="py-3">${item.risk_level}</td><td class="py-3">${new Date(item.timestamp).toLocaleString()}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    async function loadDashboard() {
+      const status = document.getElementById('status');
+      const retryBtn = document.getElementById('retryBtn');
+      retryBtn.classList.add('hidden');
+      status.textContent = 'Loading dashboard...';
+
+      try {
+        const response = await fetch(`${API_BASE}/dashboard-stats`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Failed to load dashboard');
+
+        document.getElementById('totalScans').textContent = data.total_scans || 0;
+        document.getElementById('highRisk').textContent = data.risk_counts?.High || 0;
+        document.getElementById('mediumRisk').textContent = data.risk_counts?.Medium || 0;
+        document.getElementById('lowRisk').textContent = data.risk_counts?.Low || 0;
+
+        renderChart(data.risk_counts || { High: 0, Medium: 0, Low: 0 });
+        renderTable(data.last_5_scans || []);
+        status.textContent = '';
+      } catch (error) {
+        status.textContent = `Something went wrong, please try again. (${error.message})`;
+        retryBtn.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('retryBtn').addEventListener('click', loadDashboard);
+    loadDashboard();
+  </script>
+</body>
+</html>

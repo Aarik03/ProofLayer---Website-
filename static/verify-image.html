@@ -1,0 +1,145 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProofLayer | Verify Image</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#07090f; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.14); }
+    body { font-family:'Sora',sans-serif; background:radial-gradient(circle at 20% 15%, rgba(118,247,255,.13), transparent 35%), radial-gradient(circle at 80% 20%, rgba(124,255,188,.13), transparent 30%), var(--bg); color:#f5f7ff; min-height:100vh; }
+    .glass { background:var(--card); border:1px solid var(--line); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); box-shadow:0 20px 60px rgba(0,0,0,.45); }
+    .qr { background: repeating-linear-gradient(0deg, #d1fae5 0 6px, #0b1220 6px 12px), repeating-linear-gradient(90deg, #d1fae5 0 6px, #0b1220 6px 12px); mix-blend-mode:screen; opacity:.5; }
+  </style>
+</head>
+<body>
+  <header class="max-w-6xl mx-auto px-6 py-6">
+    <nav class="glass rounded-2xl px-5 py-4 flex items-center justify-between">
+      <a href="index.html" class="text-xl font-semibold tracking-wide">ProofLayer</a>
+      <div class="flex gap-3 text-sm">
+        <a class="px-4 py-2 rounded-xl border border-white/20 bg-white/10" href="verify-image.html">Verify Image</a>
+        <a class="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10" href="verify-text.html">Verify Text</a>
+        <a class="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10" href="dashboard.html">Dashboard</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 pb-16 space-y-6">
+    <section class="glass rounded-3xl p-6 md:p-8">
+      <h1 class="text-3xl font-semibold">Image Verification</h1>
+      <p class="text-slate-300 mt-2">Upload an image to generate a cryptographic authenticity certificate.</p>
+      <form id="imageForm" class="mt-6 space-y-4">
+        <label for="imageInput" class="block border border-dashed border-cyan-200/35 rounded-2xl p-8 text-center cursor-pointer hover:bg-white/5 transition">
+          <p class="font-medium">Drop image here or click to upload</p>
+          <p id="fileName" class="mt-2 text-sm text-slate-300">No file selected</p>
+          <input id="imageInput" name="file" type="file" accept="image/*" class="hidden" required />
+        </label>
+        <button id="submitBtn" type="submit" class="px-6 py-3 rounded-xl bg-cyan-300 text-slate-900 font-semibold hover:bg-cyan-200 transition inline-flex items-center gap-2">
+          <span id="spinner" class="hidden w-4 h-4 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin"></span>
+          <span id="btnLabel">Verify</span>
+        </button>
+        <p id="status" class="text-sm text-slate-300 hidden"></p>
+      </form>
+    </section>
+
+    <section id="resultPanel" class="glass rounded-3xl p-6 md:p-8 hidden">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.2em] text-cyan-200/80">Verification Certificate</p>
+          <h2 class="mt-2 text-2xl font-semibold">ProofLayer Result <span class="text-emerald-300">[Verified]</span></h2>
+        </div>
+        <div class="w-16 h-16 rounded-lg qr border border-emerald-200/40"></div>
+      </div>
+      <div class="mt-6 grid md:grid-cols-2 gap-4 text-sm">
+        <div class="glass rounded-2xl p-4"><p class="text-slate-300">Authenticity Score</p><p id="authenticityScore" class="text-3xl font-semibold">--</p></div>
+        <div class="glass rounded-2xl p-4"><p class="text-slate-300">Risk Level</p><p id="riskLevel" class="text-lg font-semibold mt-1">--</p></div>
+        <div class="glass rounded-2xl p-4 md:col-span-2"><p class="text-slate-300">Verification ID</p><a id="verificationLink" href="#" class="text-lg font-semibold mt-1 text-cyan-200 hover:underline">--</a></div>
+        <div class="glass rounded-2xl p-4 md:col-span-2"><p class="text-slate-300">SHA-256 Hash</p><p id="hashValue" class="font-mono mt-1 break-all">--</p></div>
+        <div class="glass rounded-2xl p-4 md:col-span-2"><p class="text-slate-300">Timestamp</p><p id="timestampValue" class="mt-1">--</p></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = (localStorage.getItem('prooflayer_api_base') || 'http://127.0.0.1:8000').replace(/\/$/, '');
+    const MAX_FILE_BYTES = 10 * 1024 * 1024;
+    const form = document.getElementById('imageForm');
+    const input = document.getElementById('imageInput');
+    const fileName = document.getElementById('fileName');
+    const statusEl = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+    const btnLabel = document.getElementById('btnLabel');
+    const panel = document.getElementById('resultPanel');
+
+    function setLoading(isLoading) {
+      submitBtn.disabled = isLoading;
+      spinner.classList.toggle('hidden', !isLoading);
+      btnLabel.textContent = isLoading ? 'Analyzing...' : 'Verify';
+    }
+
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      fileName.textContent = file ? `${file.name} (${Math.round(file.size / 1024)} KB)` : 'No file selected';
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (submitBtn.disabled) return;
+      const file = input.files && input.files[0];
+      if (!file) {
+        statusEl.classList.remove('hidden');
+        statusEl.textContent = 'Please select an image first.';
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        statusEl.classList.remove('hidden');
+        statusEl.textContent = 'Only image files are allowed.';
+        return;
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        statusEl.classList.remove('hidden');
+        statusEl.textContent = 'Image too large. Max size is 10MB.';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = 'Analyzing image... model may warm up, please wait.';
+      setLoading(true);
+
+      try {
+        const response = await fetch(`${API_BASE}/verify-image`, { method: 'POST', body: formData });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Verification failed.');
+
+        const authenticity = Math.max(0, (1 - Number(data.score || 0)) * 100);
+        const risk = String(data.risk_level || 'Unknown');
+        const colorClass = risk === 'High' ? 'text-red-300' : risk === 'Medium' ? 'text-amber-300' : 'text-emerald-300';
+        const authenticityScore = document.getElementById('authenticityScore');
+        authenticityScore.textContent = `${authenticity.toFixed(1)}%`;
+        authenticityScore.className = `text-3xl font-semibold ${colorClass}`;
+
+        document.getElementById('riskLevel').textContent = risk;
+        const reportUrl = `report.html?id=${encodeURIComponent(data.verification_id)}`;
+        const vLink = document.getElementById('verificationLink');
+        vLink.textContent = data.verification_id;
+        vLink.href = reportUrl;
+        document.getElementById('hashValue').textContent = String(data.hash || '--');
+        document.getElementById('timestampValue').textContent = new Date(data.timestamp).toLocaleString();
+
+        panel.classList.remove('hidden');
+        statusEl.textContent = 'Verification complete.';
+      } catch (error) {
+        statusEl.textContent = `Something went wrong, please try again. (${error.message})`;
+      } finally {
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>

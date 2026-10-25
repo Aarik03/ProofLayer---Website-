@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/static/index.html" },
+    { "source": "/verify-image", "destination": "/static/verify-image.html" },
+    { "source": "/verify-text", "destination": "/static/verify-text.html" },
+    { "source": "/dashboard", "destination": "/static/dashboard.html" },
+    { "source": "/report", "destination": "/static/report.html" },
+    { "source": "/(.*)", "destination": "/static/$1" }
+  ]
+}

@@ -1,0 +1,19 @@
+﻿services:
+  - type: web
+    name: prooflayer-api
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: HF_TOKEN
+        sync: false
+      - key: HF_IMAGE_MODEL_ENDPOINT
+        value: https://api-inference.huggingface.co/models/umm-maybe/AI-image-detector
+      - key: HF_TEXT_MODEL_ENDPOINT
+        value: https://api-inference.huggingface.co/models/roberta-base-openai-detector
+    disk:
+      name: prooflayer-data
+      mountPath: /opt/render/project/src
+      sizeGB: 1

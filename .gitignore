@@ -1,0 +1,6 @@
+﻿__pycache__/
+*.pyc
+.env
+prooflayer.db
+uploads/*
+!.gitkeep

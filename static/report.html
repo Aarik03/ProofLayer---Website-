@@ -1,0 +1,96 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProofLayer | Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#07090f; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.14); }
+    body { font-family:'Sora',sans-serif; background:radial-gradient(circle at 20% 20%, rgba(118,247,255,.12), transparent 35%), radial-gradient(circle at 80% 80%, rgba(124,255,188,.12), transparent 30%), var(--bg); color:#f5f7ff; min-height:100vh; }
+    .glass { background:var(--card); border:1px solid var(--line); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); box-shadow:0 20px 60px rgba(0,0,0,.45); }
+  </style>
+</head>
+<body>
+  <header class="max-w-5xl mx-auto px-6 py-6">
+    <nav class="glass rounded-2xl px-5 py-4 flex items-center justify-between">
+      <a href="index.html" class="text-xl font-semibold tracking-wide">ProofLayer</a>
+      <div class="flex gap-3 text-sm">
+        <a class="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10" href="verify-image.html">Verify Image</a>
+        <a class="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10" href="verify-text.html">Verify Text</a>
+        <a class="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10" href="dashboard.html">Dashboard</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16">
+    <section class="glass rounded-3xl p-6 md:p-8">
+      <p class="text-xs uppercase tracking-[0.2em] text-cyan-200/80">Public Verification Portal</p>
+      <h1 class="mt-2 text-3xl font-semibold">Verification Report</h1>
+      <p id="status" class="text-slate-300 mt-3">Loading report...</p>
+      <button id="retryBtn" class="hidden mt-3 px-3 py-1.5 text-xs rounded-lg border border-white/20 hover:bg-white/10">Retry</button>
+
+      <div id="reportPanel" class="hidden mt-6 space-y-4">
+        <div class="grid md:grid-cols-2 gap-4 text-sm">
+          <div class="glass rounded-2xl p-4"><p class="text-slate-300">Verification ID</p><p id="verificationId" class="text-lg font-semibold mt-1"></p></div>
+          <div class="glass rounded-2xl p-4"><p class="text-slate-300">Type</p><p id="contentType" class="text-lg font-semibold mt-1 uppercase"></p></div>
+          <div class="glass rounded-2xl p-4"><p class="text-slate-300">AI Risk Score</p><p id="scoreValue" class="text-lg font-semibold mt-1"></p></div>
+          <div class="glass rounded-2xl p-4"><p class="text-slate-300">Risk Level</p><p id="riskValue" class="text-lg font-semibold mt-1"></p></div>
+          <div class="glass rounded-2xl p-4 md:col-span-2"><p class="text-slate-300">SHA-256 Hash</p><p id="hashValue" class="font-mono break-all mt-1"></p></div>
+          <div class="glass rounded-2xl p-4 md:col-span-2"><p class="text-slate-300">Timestamp</p><p id="timestampValue" class="mt-1"></p></div>
+        </div>
+        <div class="glass rounded-2xl p-4"><p class="text-slate-300 mb-2">Metadata</p><pre id="metadataBlock" class="text-xs whitespace-pre-wrap break-all text-slate-200"></pre></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = (localStorage.getItem('prooflayer_api_base') || 'http://127.0.0.1:8000').replace(/\/$/, '');
+    const statusEl = document.getElementById('status');
+    const panel = document.getElementById('reportPanel');
+    const retryBtn = document.getElementById('retryBtn');
+
+    function getVerificationId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('id');
+    }
+
+    async function loadReport() {
+      retryBtn.classList.add('hidden');
+      panel.classList.add('hidden');
+      const id = getVerificationId();
+      if (!id) {
+        statusEl.textContent = 'Missing verification ID. Open this page with ?id=PL-2026-XXXXX';
+        return;
+      }
+      statusEl.textContent = 'Loading report...';
+
+      try {
+        const response = await fetch(`${API_BASE}/report/${encodeURIComponent(id)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Could not load report');
+
+        document.getElementById('verificationId').textContent = data.verification_id;
+        document.getElementById('contentType').textContent = data.type;
+        document.getElementById('scoreValue').textContent = `${(Number(data.score) * 100).toFixed(2)}%`;
+        document.getElementById('riskValue').textContent = data.risk_level;
+        document.getElementById('hashValue').textContent = data.hash;
+        document.getElementById('timestampValue').textContent = new Date(data.timestamp).toLocaleString();
+        document.getElementById('metadataBlock').textContent = JSON.stringify(data.metadata || {}, null, 2);
+
+        panel.classList.remove('hidden');
+        statusEl.textContent = 'Report verified and loaded.';
+      } catch (error) {
+        statusEl.textContent = `Unable to fetch report. ${error.message}`;
+        retryBtn.classList.remove('hidden');
+      }
+    }
+
+    retryBtn.addEventListener('click', loadReport);
+    loadReport();
+  </script>
+</body>
+</html>
